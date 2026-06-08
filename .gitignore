@@ -1,0 +1,19 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.db
+backend/*.pyc
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Env files
+.env
+backend/.env
+frontend/.env
+
+# Model (too large for git - upload separately)
+backend/ml/xgboost_model.pkl
