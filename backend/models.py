@@ -93,3 +93,30 @@ class Alert(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     patient = relationship("Patient", back_populates="alerts")
+
+class PatientRequest(Base):
+    __tablename__ = "patient_requests"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+
+    patient_id = Column(
+        String,
+        ForeignKey("patients.id"),
+        nullable=False
+    )
+
+    clinician_id = Column(
+        String,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        default="pending"
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )

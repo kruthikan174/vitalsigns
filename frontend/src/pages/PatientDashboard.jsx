@@ -12,6 +12,9 @@ export default function PatientDashboard() {
   const [profile,  setProfile]  = useState(null);
   const [sessions, setSessions] = useState([]);
   const [patientId, setPatientId] = useState(null);
+  const [doctorEmail, setDoctorEmail] = useState("");
+  const [requestMsg, setRequestMsg] = useState("");
+  const [requestLoading, setRequestLoading] = useState(false);
 
   const { vitals, prediction, cameraFrame, connected } = useVitalsSocket(patientId);
 
@@ -26,6 +29,32 @@ export default function PatientDashboard() {
   }, []);
 
   const latest = vitals[vitals.length - 1];
+
+  const sendRequest = async () => {
+    if (!doctorEmail.trim()) {
+      setRequestMsg("Please enter a clinician email");
+      return;
+    }
+
+    try {
+      setRequestLoading(true);
+      setRequestMsg("");
+
+      const res = await api.post("/api/requests/connect", {
+        doctor_email: doctorEmail
+      });
+
+      setRequestMsg(res.data.message);
+      setDoctorEmail("");
+      setRequestMsg("Request sent successfully!");
+    } catch (err) {
+      setRequestMsg(
+        err.response?.data?.detail || "Failed to send request"
+      );
+    } finally {
+      setRequestLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -149,6 +178,47 @@ export default function PatientDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div className="card">
               <CameraFeed frame={cameraFrame} />
+            </div>
+
+            <div className="card">
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  marginBottom: 14
+                }}
+              >
+                Connect to Clinician
+              </h3>
+
+              <input
+                type="email"
+                value={doctorEmail}
+                onChange={(e) => setDoctorEmail(e.target.value)}
+                placeholder="doctor@example.com"
+                style={{ marginBottom: 12 }}
+              />
+
+              <button
+                className="btn-primary"
+                style={{ width: "100%" }}
+                onClick={sendRequest}
+                disabled={requestLoading}
+              >
+                {requestLoading ? "Sending..." : "Send Request"}
+              </button>
+
+              {requestMsg && (
+                <p
+                  style={{
+                    marginTop: 10,
+                    fontSize: 12,
+                    color: "var(--muted)"
+                  }}
+                >
+                  {requestMsg}
+                </p>
+              )}
             </div>
 
             {profile && (

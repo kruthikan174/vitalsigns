@@ -14,12 +14,19 @@ export default function ClinicianDashboard() {
   const [chartData,  setChartData]  = useState([]);
   const [sessions,   setSessions]   = useState([]);
   const { feed, connected } = useClinicianSocket();
+  const [pendingRequests, setPendingRequests] = useState([]);
 
   useEffect(() => {
     api.get("/api/patients/").then(r => {
       setPatients(r.data);
       if (r.data.length > 0) setSelectedId(r.data[0].id);
     });
+  }, []);
+
+  useEffect(() => {
+    api.get("/api/requests/pending")
+      .then(r => setPendingRequests(r.data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -43,6 +50,35 @@ export default function ClinicianDashboard() {
   const alertCount      = Object.values(feed).filter(
     f => f?.prediction?.label === "Stress" || f?.prediction?.label === "Irregular"
   ).length;
+  const acceptRequest = async (id) => {
+    try {
+      await api.post(`/api/requests/${id}/accept`);
+
+      setPendingRequests(prev =>
+        prev.filter(r => r.request_id !== id)
+      );
+
+      const patientsRes = await api.get("/api/patients/");
+      setPatients(patientsRes.data);
+      if (!selectedId && patientsRes.data.length > 0) {
+        setSelectedId(patientsRes.data[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const rejectRequest = async (id) => {
+    try {
+      await api.post(`/api/requests/${id}/reject`);
+
+      setPendingRequests(prev =>
+        prev.filter(r => r.request_id !== id)
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -72,6 +108,68 @@ export default function ClinicianDashboard() {
 
           {/* LEFT */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+            {pendingRequests.length > 0 && (
+              <div className="card">
+                <h2
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    marginBottom: 16
+                  }}
+                >
+                  Pending Requests
+                </h2>
+
+                {pendingRequests.map(req => (
+                  <div
+                    key={req.request_id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 0",
+                      borderBottom: "1px solid var(--border)"
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600 }}>
+                        {req.patient_name}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "var(--muted)"
+                        }}
+                      >
+                        {req.patient_email}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        className="btn-primary"
+                        onClick={() =>
+                          acceptRequest(req.request_id)
+                        }
+                      >
+                        Accept
+                      </button>
+
+                      <button
+                        className="btn-ghost"
+                        onClick={() =>
+                          rejectRequest(req.request_id)
+                        }
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}  
 
             {/* patient table */}
             <div className="card">

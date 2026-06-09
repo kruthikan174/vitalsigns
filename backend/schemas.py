@@ -76,3 +76,14 @@ class AlertOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ConnectDoctorRequest(BaseModel):
+    doctor_email: str
+
+
+class PendingRequestOut(BaseModel):
+    request_id: str
+    patient_id: str
+    patient_name: str
+    patient_email: str
+    created_at: datetime

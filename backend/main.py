@@ -6,6 +6,7 @@ from ws_hub import hub
 from ml.predictor import predict_batch
 from routers import auth, patients, sessions, alerts
 import models, time
+from routers import requests
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,7 +24,10 @@ app.include_router(auth.router,     prefix="/api/auth")
 app.include_router(patients.router, prefix="/api/patients")
 app.include_router(sessions.router, prefix="/api/sessions")
 app.include_router(alerts.router,   prefix="/api/alerts")
-
+app.include_router(
+    requests.router,
+    prefix="/api/requests"
+)
 
 @app.get("/")
 def root():
