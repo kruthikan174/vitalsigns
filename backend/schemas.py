@@ -87,3 +87,8 @@ class PendingRequestOut(BaseModel):
     patient_name: str
     patient_email: str
     created_at: datetime
+
+class RequestStatusOut(BaseModel):
+    status: str
+    doctor_name: Optional[str] = None
+    doctor_email: Optional[str] = None

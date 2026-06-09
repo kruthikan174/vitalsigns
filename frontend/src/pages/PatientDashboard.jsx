@@ -15,6 +15,7 @@ export default function PatientDashboard() {
   const [doctorEmail, setDoctorEmail] = useState("");
   const [requestMsg, setRequestMsg] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
+  const [requestStatus, setRequestStatus] = useState(null);
 
   const { vitals, prediction, cameraFrame, connected } = useVitalsSocket(patientId);
 
@@ -24,6 +25,9 @@ export default function PatientDashboard() {
       setPatientId(r.data.id);
       api.get(`/api/sessions/patient/${r.data.id}`)
         .then(s => setSessions(s.data))
+        .catch(() => {});
+      api.get("/api/requests/my-status")
+        .then(r => setRequestStatus(r.data))
         .catch(() => {});
     });
   }, []);
@@ -47,6 +51,11 @@ export default function PatientDashboard() {
       setRequestMsg(res.data.message);
       setDoctorEmail("");
       setRequestMsg("Request sent successfully!");
+      setRequestStatus({
+        status: "pending",
+        doctor_name: "",
+        doctor_email: doctorEmail
+      });
     } catch (err) {
       setRequestMsg(
         err.response?.data?.detail || "Failed to send request"
@@ -80,36 +89,122 @@ export default function PatientDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* current state */}
-            <div className="card" style={{ textAlign: "center", padding: 32 }}>
-              <p style={{ color: "var(--muted)", fontSize: 13, marginBottom: 12 }}>
-                Current health state
-              </p>
-              <StateBadge label={prediction?.label} large />
+            {requestStatus?.status === "none" && (
+              <div className="card">
+                <h3
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    marginBottom: 14
+                  }}
+                >
+                  Connect to Clinician
+                </h3>
 
-              {prediction && (
-                <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 8, maxWidth: 300, margin: "24px auto 0" }}>
-                  {[
-                    { label: "Normal",    val: prediction.confidence.Normal,    color: "var(--normal)" },
-                    { label: "Stress",    val: prediction.confidence.Stress,    color: "var(--stress)" },
-                    { label: "Irregular", val: prediction.confidence.Irregular, color: "var(--irregular)" },
-                  ].map(c => (
-                    <div key={c.label}>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
-                        <span style={{ color: "var(--muted)" }}>{c.label}</span>
-                        <span style={{ color: c.color, fontWeight: 600 }}>{(c.val * 100).toFixed(1)}%</span>
-                      </div>
-                      <div style={{ background: "var(--surface2)", borderRadius: 999, height: 5 }}>
-                        <div style={{
-                          width: `${c.val * 100}%`, height: "100%",
-                          background: c.color, borderRadius: 999,
-                          transition: "width 0.5s ease"
-                        }} />
-                      </div>
-                    </div>
-                  ))}
+                <input
+                  type="email"
+                  value={doctorEmail}
+                  onChange={(e) => setDoctorEmail(e.target.value)}
+                  placeholder="doctor@example.com"
+                  style={{ marginBottom: 12 }}
+                />
+
+                <button
+                  className="btn-primary"
+                  style={{ width: "100%" }}
+                  onClick={sendRequest}
+                  disabled={requestLoading}
+                >
+                  {requestLoading ? "Sending..." : "Send Request"}
+                </button>
+
+                {requestMsg && (
+                  <p
+                    style={{
+                      marginTop: 10,
+                      fontSize: 12,
+                      color: "var(--muted)"
+                    }}
+                  >
+                    {requestMsg}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {requestStatus?.status === "pending" && (
+              <div className="card">
+                <h3
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    marginBottom: 14
+                  }}
+                >
+                  Clinician Request Pending
+                </h3>
+
+                <p style={{ fontWeight: 600 }}>
+                  {requestStatus.doctor_name}
+                </p>
+
+                <p
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: 13
+                  }}
+                >
+                  {requestStatus.doctor_email}
+                </p>
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    color: "#f59e0b",
+                    fontWeight: 600
+                  }}
+                >
+                  Waiting for approval ⏳
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {requestStatus?.status === "accepted" && (
+              <div className="card">
+                <h3
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    marginBottom: 14
+                  }}
+                >
+                  My Clinician
+                </h3>
+
+                <p style={{ fontWeight: 600 }}>
+                  {requestStatus.doctor_name}
+                </p>
+
+                <p
+                  style={{
+                    color: "var(--muted)",
+                    fontSize: 13
+                  }}
+                >
+                  {requestStatus.doctor_email}
+                </p>
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    color: "var(--normal)",
+                    fontWeight: 600
+                  }}
+                >
+                  Connected ✓
+                </div>
+              </div>
+            )}
 
             {/* vitals numbers */}
             {latest && (

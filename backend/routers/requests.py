@@ -74,6 +74,53 @@ def connect_to_doctor(
         "message": "Request sent successfully"
     }
 
+@router.get("/my-status")
+def my_request_status(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_patient)
+):
+    patient = db.query(models.Patient).filter(
+        models.Patient.user_id == current_user.id
+    ).first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=404,
+            detail="Patient profile not found"
+        )
+
+    # Accepted clinician
+    if patient.assigned_to:
+        doctor = db.query(models.User).filter(
+            models.User.id == patient.assigned_to
+        ).first()
+
+        return {
+            "status": "accepted",
+            "doctor_name": doctor.name if doctor else None,
+            "doctor_email": doctor.email if doctor else None
+        }
+
+    # Latest pending request
+    request = db.query(models.PatientRequest).filter(
+        models.PatientRequest.patient_id == patient.id,
+        models.PatientRequest.status == "pending"
+    ).first()
+
+    if request:
+        doctor = db.query(models.User).filter(
+            models.User.id == request.clinician_id
+        ).first()
+
+        return {
+            "status": "pending",
+            "doctor_name": doctor.name if doctor else None,
+            "doctor_email": doctor.email if doctor else None
+        }
+
+    return {
+        "status": "none"
+    }
 
 # --------------------------------------------------
 # Clinician views pending requests
