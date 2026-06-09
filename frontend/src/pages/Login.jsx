@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const { login } = useAuth();
@@ -21,16 +22,6 @@ export default function Login() {
       setError("Invalid email or password");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fillDemo = (role) => {
-    if (role === "clinician") {
-      setEmail("doctor@vitals.com");
-      setPassword("doctor123");
-    } else {
-      setEmail("patient1@vitals.com");
-      setPassword("patient123");
     }
   };
 
@@ -101,30 +92,13 @@ export default function Login() {
             </button>
           </form>
 
-          {/* demo shortcuts */}
-          <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-            <p style={{ color: "var(--muted)", fontSize: 12, marginBottom: 10, textAlign: "center" }}>
-              Demo accounts
-            </p>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                className="btn-ghost"
-                style={{ flex: 1, fontSize: 13 }}
-                onClick={() => fillDemo("clinician")}
-                type="button"
-              >
-                👨‍⚕️ Clinician
-              </button>
-              <button
-                className="btn-ghost"
-                style={{ flex: 1, fontSize: 13 }}
-                onClick={() => fillDemo("patient")}
-                type="button"
-              >
-                🧑 Patient
-              </button>
-            </div>
-          </div>
+          {/* register link */}
+          <p style={{ textAlign: "center", marginTop: 16, color: "var(--muted)", fontSize: 13 }}>
+            New user?{" "}
+            <Link to="/register" style={{ color: "var(--primary)", textDecoration: "none" }}>
+              Create an account
+            </Link>
+          </p>
         </div>
 
         <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 20 }}>

@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import ClinicianDashboard from "./pages/ClinicianDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import "./index.css";
+import Register from "./pages/Register";
 
 function ProtectedRoute({ children, allowedRole }) {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ function AppRoutes() {
           <PatientDashboard />
         </ProtectedRoute>
       } />
+      <Route path="/register" element={<Register />} />
     </Routes>
   );
 }
