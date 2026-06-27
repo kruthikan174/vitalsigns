@@ -35,6 +35,7 @@ def root():
 
 
 # ── Pi pushes data here ─────────────────────────────────────────────
+# ── Pi pushes data here ─────────────────────────────────────────────
 @app.websocket("/ws/ingest")
 async def ingest(ws: WebSocket, db: Session = Depends(get_db)):
     await ws.accept()
@@ -48,62 +49,77 @@ async def ingest(ws: WebSocket, db: Session = Depends(get_db)):
             camera_frame = data.get("camera_frame")
 
             if not patient_id or not batch:
+                await ws.send_json({"status": "error", "message": "Missing patient_id or batch"})
                 continue
 
-            # open a session if none active
-            if patient_id not in active_sessions:
-                new_session = models.Session(patient_id=patient_id)
-                db.add(new_session)
-                db.commit()
-                db.refresh(new_session)
-                active_sessions[patient_id] = new_session.id
+            try:
+                # open a session if none active
+                if patient_id not in active_sessions:
+                    new_session = models.Session(patient_id=patient_id)
+                    db.add(new_session)
+                    db.commit()
+                    db.refresh(new_session)
+                    active_sessions[patient_id] = new_session.id
 
-            session_id = active_sessions[patient_id]
-            prediction = predict_batch(batch)
+                session_id = active_sessions[patient_id]
+                prediction = predict_batch(batch)
 
-            # save reading
-            latest = batch[-1]
-            reading = models.Reading(
-                session_id           = session_id,
-                timestamp            = latest.get("timestamp", time.time()),
-                ecg_hr_mean          = latest.get("ECG_HR_mean", 0),
-                ecg_hr_std           = latest.get("ECG_HR_std", 0),
-                hrv                  = latest.get("HRV", 0),
-                rmssd                = latest.get("RMSSD", 0),
-                rr_mean              = latest.get("RR_mean", 0),
-                rr_std               = latest.get("RR_std", 0),
-                rr_count             = latest.get("RR_count", 0),
-                radar_hr_mean        = latest.get("Radar_HR_mean", 0),
-                hr_fused             = latest.get("HR_fused", 0),
-                prediction           = prediction["label"],
-                confidence_normal    = prediction["confidence"]["Normal"],
-                confidence_stress    = prediction["confidence"]["Stress"],
-                confidence_irregular = prediction["confidence"]["Irregular"],
-            )
-            db.add(reading)
-
-            # create alert if stress or irregular
-            if prediction["label"] in ("Stress", "Irregular"):
-                alert = models.Alert(
-                    patient_id = patient_id,
-                    session_id = session_id,
-                    alert_type = prediction["label"].lower(),
-                    message    = (
-                        f"Patient entered {prediction['label']} state. "
-                        f"HR: {latest.get('HR_fused', 0):.1f} bpm"
-                    )
+                # save reading
+                latest = batch[-1]
+                reading = models.Reading(
+                    session_id           = session_id,
+                    timestamp            = latest.get("timestamp", time.time()),
+                    ecg_hr_mean          = latest.get("ECG_HR_mean", 0),
+                    ecg_hr_std           = latest.get("ECG_HR_std", 0),
+                    hrv                  = latest.get("HRV", 0),
+                    rmssd                = latest.get("RMSSD", 0),
+                    rr_mean              = latest.get("RR_mean", 0),
+                    rr_std               = latest.get("RR_std", 0),
+                    rr_count             = latest.get("RR_count", 0),
+                    radar_hr_mean        = latest.get("Radar_HR_mean", 0),
+                    hr_fused             = latest.get("HR_fused", 0),
+                    prediction           = prediction["label"],
+                    confidence_normal    = prediction["confidence"]["Normal"],
+                    confidence_stress    = prediction["confidence"]["Stress"],
+                    confidence_irregular = prediction["confidence"]["Irregular"],
                 )
-                db.add(alert)
+                db.add(reading)
 
-            db.commit()
+                # create alert if stress or irregular
+                if prediction["label"] in ("Stress", "Irregular"):
+                    alert = models.Alert(
+                        patient_id = patient_id,
+                        session_id = session_id,
+                        alert_type = prediction["label"].lower(),
+                        message    = (
+                            f"Patient entered {prediction['label']} state. "
+                            f"HR: {latest.get('HR_fused', 0):.1f} bpm"
+                        )
+                    )
+                    db.add(alert)
 
-            # broadcast to browser clients
-            await hub.broadcast(patient_id, {
-                "vitals":       latest,
-                "prediction":   prediction,
-                "camera_frame": camera_frame,
-                "session_id":   session_id,
-            })
+                db.commit()
+
+                # broadcast to browser clients
+                await hub.broadcast(patient_id, {
+                    "vitals":       latest,
+                    "prediction":   prediction,
+                    "camera_frame": camera_frame,
+                    "session_id":   session_id,
+                })
+
+                # acknowledge success back to the Pi
+                await ws.send_json({
+                    "status": "success",
+                    "message": "Data received"
+                })
+
+            except Exception as e:
+                # acknowledge failure so the Pi retries instead of hanging
+                await ws.send_json({
+                    "status": "error",
+                    "message": str(e)
+                })
 
     except WebSocketDisconnect:
         # close any open sessions
@@ -116,7 +132,6 @@ async def ingest(ws: WebSocket, db: Session = Depends(get_db)):
                 session.ended_at    = datetime.utcnow()
                 session.final_state = "ended"
                 db.commit()
-
 
 # ── Browser clients connect here ────────────────────────────────────
 @app.websocket("/ws/live/clinician")
