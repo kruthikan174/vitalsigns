@@ -7,8 +7,8 @@ import math
 import base64
 import struct
 
-WS_URL     = "ws://localhost:8000/ws/ingest"
-PATIENT_ID = None   # will be fetched from DB automatically — set manually if needed
+WS_URL = "wss://vitalsigns-production-f612.up.railway.app/ws/ingest"
+PATIENT_ID = "2cb59b0a-094a-4c69-84dd-b80a56c2b98b"   # will be fetched from DB automatically — set manually if needed
 
 # ── fetch patient id from DB ──────────────────────────────────────────
 def get_first_patient_id():

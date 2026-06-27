@@ -36,11 +36,13 @@ export default function Login() {
         {/* logo / title */}
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{
-            width: 56, height: 56, borderRadius: "50%",
-            background: "var(--primary)", margin: "0 auto 16px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 26
-          }}>❤️</div>
+            width: 130, height: 130, borderRadius: "28px",
+            margin: "0 auto 20px",
+            boxShadow: "var(--shadow)",
+            overflow: "hidden"
+          }}>
+            <img src="/heart_icon.png" alt="VitalSigns" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
           <h1 style={{ fontSize: 24, fontWeight: 600, color: "var(--text)" }}>
             VitalSigns
           </h1>

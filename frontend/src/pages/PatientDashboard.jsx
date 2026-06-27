@@ -215,7 +215,11 @@ export default function PatientDashboard() {
                   { label: "HR (Fused)",  value: latest.HR_fused?.toFixed(1),      unit: "bpm" },
                   { label: "Respiration", value: latest.RR_mean?.toFixed(1),       unit: "br/min" },
                 ].map(v => (
-                  <div key={v.label} className="card" style={{ textAlign: "center", padding: "16px 10px" }}>
+                  <div key={v.label} className="card" style={{
+                    textAlign: "center", padding: "18px 10px",
+                    background: "linear-gradient(180deg, #eef6fd 0%, #ffffff 100%)",
+                    border: "1px solid #d9e6f5"
+                  }}>
                     <div style={{ fontSize: 24, fontWeight: 700, color: "var(--primary)" }}>{v.value}</div>
                     <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>{v.unit}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)" }}>{v.label}</div>

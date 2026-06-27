@@ -75,7 +75,7 @@ export default function Register() {
             background: "var(--primary)", margin: "0 auto 16px",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 26
-          }}>❤️</div>
+          }}><img src="/heart_icon.png" alt="logo" style={{ width: 28, height: 28, borderRadius: 8 }} /></div>
           <h1 style={{ fontSize: 24, fontWeight: 600 }}>Create Account</h1>
           <p style={{ color: "var(--muted)", marginTop: 6 }}>
             {step === 1 ? "Step 1 of 2 — Basic info" : "Step 2 of 2 — Patient details"}
